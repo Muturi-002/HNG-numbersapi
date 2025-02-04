@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"io"
 	"net/http"
 	"strconv"
 	"encoding/json"
@@ -14,23 +15,27 @@ type Number struct{
 	Perfect bool `json:"is_perfect"`
 	Properties []string `json:"properties"`
 	DigitSum int `json:"digit_sum"`
-	API_Fact string `json:"fun_fact"`
+	API_Fact string `json:"fun_fact,omitempty"`
 }
 var prime, perfect, err bool
 var num, sum, even, odd int
 var properties []string
 var armstrong string
 
-func api(number int) {
-	// Use API to get a fun facts of a number- http://numbersapi.com/#42
+func api(number int) string {
+	// Use API to get a fun fact of a number- http://numbersapi.com/#42
 	url := fmt.Sprintf("http://numbersapi.com/%d/math", number)
 	response, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Error fetching data:",err)
-		return
+		fmt.Println("Error fetching data:", err)
+		return ""
 	}
 	defer response.Body.Close()
-	
+	if response.StatusCode == http.StatusOK {
+		bodyBytes, _ := io.ReadAll(response.Body)
+		return string(bodyBytes)
+	}
+	return ""
 }
 func Armstrong(number int) string {
 	digits := strconv.Itoa(number)
@@ -110,6 +115,10 @@ func Properties(number int) []string {
 
 func main() {
 	var num Number
+	/* nonInteger:= map[string]any{
+		"number": "alphabet",
+		"error": true,
+	} */
 	fmt.Println("Enter a number: ")
 	fmt.Scan(&num.Num)
 	if num.Num <=0 {
@@ -119,14 +128,8 @@ func main() {
 		num.Prime = Prime(num.Num)
 		num.Perfect= Perfect(num.Num)
 		num.DigitSum = SumDigits(num.Num)
-		num.Properties = Properties(num.Num)
-		response := map[string]interface{}{
-			"number": num.Num,
-			"is_prime": num.Prime,
-			"is_perfect": num.Perfect,
-			"properties": num.Properties,
-			"digit_sum":num.DigitSum,
-		}
+		num.API_Fact = api(num.Num)
+		response:= num
 		jsonResponse, _ := json.MarshalIndent(response,"","\t")
 		json.Unmarshal(jsonResponse, &response)
 		fmt.Println(string(jsonResponse))
