@@ -6,6 +6,7 @@ import (
 	"encoding/json" */
 	"strconv"
 	"math"
+	_ "github.com/gin-gonic/gin"
 )
 var prime, perfect bool
 var num, sum, even, odd int
